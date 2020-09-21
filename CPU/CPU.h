@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <bitset>
+#include "InstructionSet.h"
 
 //REGISTERS
 #define		RAX		registers[0x00]
@@ -42,14 +43,15 @@ public:
 		RSP = RBP = 0xffff8;
 	}
 
-	std::string padLeftZeros(std::string s, unsigned int l) {
+	// helper functions
+	/*std::string padLeftZeros(std::string s, unsigned int l) {
 		if (s.length() >= l)
 			return s;
 		std::string r = "";
 		while (r.length() < l - s.length())
 			r += "0";
 		return r + s;
-	}
+	}*/
 
 	void printMemory(int startingLocation) {
 		printMemory(startingLocation, 100);
@@ -63,6 +65,10 @@ public:
 
 	int btoi(byte b) {
 		return ((int)b) & 0xff;
+	}
+
+	uint64_t binaryAdd(uint64_t a, uint64_t b) {
+		return (a + b) & 0xffffffffffffffff;
 	}
 
 	// fetch methods
@@ -162,10 +168,64 @@ public:
 	// execution methods
 	void step() {
 		byte instruction = fetch();
-
+		uint64_t lit;
+		int src, dst;
 		switch (instruction)
 		{
+			// arithmetic
+		case ADDL:
+			lit = fetch64();
+			dst = fetch();
+			if (registers[dst] + lit > 0x100000000l)
+				registers[dst] = binaryAdd(registers[dst], lit);
+			break;
+
+		case ADDR:
+			src = fetch();
+			dst = fetch();
+			registers[dst] = binaryAdd(registers[src], registers[dst]);
+			break;
+
+		case SUBL:
+			lit = fetch64();
+			dst = fetch();
+			registers[dst] -= lit;
+			CF = registers[dst] < 0;
+			ZF = registers[dst] == 0;
+			break;
+
+		case SUBR:
+			src = fetch();
+			dst = fetch();
+			registers[dst] -= registers[src];
+			CF = registers[dst] < 0;
+			ZF = registers[dst] == 0;
+			break;
+
+		case MULL:
+			lit = fetch64();
+			RAX *= lit;
+			break;
+
+		case MULR:
+			src = fetch();
+			RAX *= registers[src];
+			break;
+
+		case DIVL:
+			lit = fetch64();
+			RDX = RAX % lit;
+			RAX /= lit;
+			break;
+
+		case DIVR:
+			src = fetch();
+			RDX = RAX % registers[src];
+			RAX /= registers[src];
+			break;
+
 		default:
+			std::cout << "Segmentation fault. (probably)\n";
 			break;
 		}
 	}
