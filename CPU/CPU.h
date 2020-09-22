@@ -52,29 +52,10 @@ public:
 	}
 
 	// helper functions
-	/*std::string padLeftZeros(std::string s, unsigned int l) {
-		if (s.length() >= l)
-			return s;
-		std::string r = "";
-		while (r.length() < l - s.length())
-			r += "0";
-		return r + s;
-	}*/
-
 	void dumpRegisters() {
 		for (size_t i = 0; i < 0x10; i++)
 		{
 			std::cout << i << ": " << (long long) registers[i] << '\n';
-		}
-	}
-
-	void printMemory(int startingLocation) {
-		printMemory(startingLocation, 100);
-	}
-
-	void printMemory(int startingLocation, int bytes) {
-		for (int i = startingLocation; i < startingLocation + bytes; i++) {
-			printf("0x%02X", memory[i]);
 		}
 	}
 
@@ -142,21 +123,23 @@ public:
 
 	// write methods
 	void write64at(uint64_t value, int addr) {
-		memory[addr++] = (byte)((value & 0xff00000000000000) >> 0x38);
-		memory[addr++] = (byte)((value & 0xff000000000000) >> 0x30);
-		memory[addr++] = (byte)((value & 0xff0000000000) >> 0x28);
-		memory[addr++] = (byte)((value & 0xff00000000) >> 0x20);
-		memory[addr++] = (byte)((value & 0xff000000) >> 0x18);
-		memory[addr++] = (byte)((value & 0xff0000) >> 0x10);
-		memory[addr++] = (byte)((value & 0xff00) >> 0x08);
-		memory[addr] = (byte)(value & 0xff);
+		int s = 0x38;
+		uint64_t m = 0xff00000000000000;
+		while (m) {
+			memory[addr++] = (byte)((value & m) >> s);
+			m >>= 8;
+			s -= 8;
+		}
 	}
 
 	void write32at(uint32_t value, int addr) {
-		memory[addr++] = (byte)((value & 0xff000000) >> 0x18);
-		memory[addr++] = (byte)((value & 0xff0000) >> 0x10);
-		memory[addr++] = (byte)((value & 0xff00) >> 0x08);
-		memory[addr] = (byte)(value & 0xff);
+		uint32_t m = 0xff000000;
+		int s = 0x18;
+		while (m) {
+			memory[addr++] = (byte)((value & m) >> s);
+			m >>= 8;
+			s -= 8;
+		}
 	}
 
 	void write16at(uint16_t value, int addr) {

@@ -13,10 +13,9 @@ int main()
 
 void program() {
     // instructions go here
-    cpu.write8(MOV_LR);
-    cpu.write64('H');
-    cpu.write8(0x0);
+    cpu.write8(MOV_LR); cpu.write64('H'); cpu.write8(0x0);      //MOVQ  $72, %rax
     cpu.write8(PUTC);
+
     cpu.write8(MOV_LR);
     cpu.write64('e');
     cpu.write8(0x0);
