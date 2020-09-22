@@ -3,6 +3,7 @@
 #include <bitset>
 #include "InstructionSet.h"
 
+#define		MEM_SIZE	0x100000
 //REGISTERS
 #define		RAX		registers[0x00]
 #define		RBX		registers[0x01]
@@ -33,14 +34,21 @@ typedef unsigned char byte;
 class CPU
 {
 
-	byte memory[0x100000] = { 0x0 };
+public:
+	byte memory[MEM_SIZE] = { 0x0 };
+	void (*prog)();
 	uint64_t registers[0x10];
 	std::bitset<64> flags = 0;
 	bool running = false;
 
-public:
+	bool debug = false;
+
+//public:
 	CPU() {
+		std::fill_n(registers, 0x10, 0);
 		RSP = RBP = 0xffff8;
+		CF = ZF = SF = AF = PF = 0;
+		std::fill_n(memory, MEM_SIZE, 0);
 	}
 
 	// helper functions
@@ -52,6 +60,13 @@ public:
 			r += "0";
 		return r + s;
 	}*/
+
+	void dumpRegisters() {
+		for (size_t i = 0; i < 0x10; i++)
+		{
+			std::cout << i << ": " << (long long) registers[i] << '\n';
+		}
+	}
 
 	void printMemory(int startingLocation) {
 		printMemory(startingLocation, 100);
@@ -82,7 +97,7 @@ public:
 		uint64_t r = 0, m = 0x100000000000000;
 		while (m) {
 			r += btoi(memory[addr++]) * m;
-			m >>= 2;
+			m >>= 8;
 		}
 		return r;	
 	}
@@ -97,7 +112,7 @@ public:
 		uint32_t r = 0, m = 0x1000000;
 		while (m) {
 			r += btoi(memory[addr++]) * m;
-			m >>= 2;
+			m >>= 8;
 		}
 		return r;
 	}
@@ -112,7 +127,7 @@ public:
 		uint16_t r = 0, m = 0x100;
 		while (m) {
 			r += btoi(memory[addr++]) * m;
-			m >>= 2;
+			m >>= 8;
 		}
 		return r;
 	}
@@ -153,6 +168,26 @@ public:
 		memory[addr] = (byte)(value & 0xff);
 	}
 
+	void write64(uint64_t val) {
+		write64at(val, RIP);
+		RIP += 8;
+	}
+
+	void write32(uint32_t val) {
+		write32at(val, RIP);
+		RIP += 4;
+	}
+
+	void write16(uint16_t val) {
+		write16at(val, RIP);
+		RIP += 2;
+	}
+
+	void write8(byte val) {
+		write8at(val, RIP);
+		RIP++;
+	}
+
 	//stack operations
 	void push(uint64_t v) {
 		RSP -= 8;
@@ -165,11 +200,20 @@ public:
 		return r;
 	}
 
+	void load(void (*f)()) {
+		prog = f;
+	}
+
+	void resetIP() {
+		RIP = (uint64_t)0;
+	}
+
 	// execution methods
 	void step() {
 		byte instruction = fetch();
 		uint64_t lit;
 		int src, dst;
+
 		switch (instruction)
 		{
 			// arithmetic
@@ -224,6 +268,39 @@ public:
 			RAX /= registers[src];
 			break;
 
+		case INC:
+			dst = fetch();
+			registers[dst]++;
+			break;
+
+		case DEC:
+			dst = fetch();
+			registers[dst]--;
+			break;
+
+			//mov
+		case MOV_LR:
+			lit = fetch64();
+			dst = fetch();
+			registers[dst] = lit;
+			break;
+
+		case MOV_RR:
+			src = fetch();
+			dst = fetch();
+			registers[dst] = registers[src];
+			break;
+
+		//I/O
+		case PUTC:
+			src = RAX;
+			putchar(src);
+			break;
+
+		case EXIT:
+			running = false;
+			break;
+
 		default:
 			std::cout << "Segmentation fault. (probably)\n";
 			break;
@@ -232,8 +309,12 @@ public:
 
 	void run() {
 		running = true;
-		while (running)
+		prog();
+		resetIP();
+		while (running) {
+			if (debug) dumpRegisters();
 			step();
+		}
 	}
-};
+} cpu;
 

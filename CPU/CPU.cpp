@@ -6,7 +6,58 @@
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    void program();
+    cpu.load(program);
+    cpu.run();
+}
+
+void program() {
+    // instructions go here
+    cpu.write8(MOV_LR);
+    cpu.write64('H');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('e');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('l');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('l');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('o');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64(' ');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('w');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('o');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('r');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('l');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(MOV_LR);
+    cpu.write64('d');
+    cpu.write8(0x0);
+    cpu.write8(PUTC);
+    cpu.write8(EXIT);
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
