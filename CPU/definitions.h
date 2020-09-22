@@ -1,5 +1,32 @@
 #pragma once
 
+#define		MEM_SIZE	0x100000
+
+//REGISTERS
+#define		RAX		registers[0x00]
+#define		RBX		registers[0x01]
+#define		RCX		registers[0x02]
+#define		RDX		registers[0x03]
+#define		RSI		registers[0x04]
+#define		RDI		registers[0x05]
+#define		RSP		registers[0x06]
+#define		RBP		registers[0x07]
+#define		R8		registers[0x08]
+#define		R9		registers[0x09]
+#define		R10		registers[0x0A]
+#define		R11		registers[0x0B]
+#define		R12		registers[0x0C]
+#define		R13		registers[0x0D]
+#define		R14		registers[0x0E]
+#define		RIP		registers[0x0F]
+
+//Flags
+#define		CF		flags[0]
+#define		PF		flags[2]
+#define		AF		flags[4]
+#define		ZF		flags[6]
+#define		SF		flags[7]
+
 // OPCODES
 #define		ADDL	0X00
 #define		ADDR	0X01
@@ -41,11 +68,3 @@
 #define		GETC	0xD1
 
 #define		EXIT	0xE0
-
-class InstructionSet
-{
-public:
-	void add() {
-
-	}
-};

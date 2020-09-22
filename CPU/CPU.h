@@ -1,33 +1,7 @@
 #pragma once
 #include <string>
 #include <bitset>
-#include "InstructionSet.h"
-
-#define		MEM_SIZE	0x100000
-//REGISTERS
-#define		RAX		registers[0x00]
-#define		RBX		registers[0x01]
-#define		RCX		registers[0x02]
-#define		RDX		registers[0x03]
-#define		RSI		registers[0x04]
-#define		RDI		registers[0x05]
-#define		RSP		registers[0x06]
-#define		RBP		registers[0x07]
-#define		R8		registers[0x08]
-#define		R9		registers[0x09]
-#define		R10		registers[0x0A]
-#define		R11		registers[0x0B]
-#define		R12		registers[0x0C]
-#define		R13		registers[0x0D]
-#define		R14		registers[0x0E]
-#define		RIP		registers[0x0F]
-
-//Flags
-#define		CF		flags[0]
-#define		PF		flags[2]
-#define		AF		flags[4]
-#define		ZF		flags[6]
-#define		SF		flags[7]
+#include "definitions.h"
 
 typedef unsigned char byte;
 
@@ -301,3 +275,25 @@ public:
 	}
 } cpu;
 
+namespace InstructionSet
+{
+	static CPU* cpu;
+
+	static void setCPU(CPU* c) {
+		cpu = c;
+	}
+
+	static void movl(uint64_t src, int dst) {
+		cpu->write8(MOV_LR);
+		cpu->write64(src);
+		cpu->write8(dst);
+	}
+
+	static void putc() {
+		cpu->write8(PUTC);
+	}
+
+	static void exit() {
+		cpu->write8(EXIT);
+	}
+};

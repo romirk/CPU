@@ -2,61 +2,27 @@
 //
 
 #include <iostream>
+#include <string>
 #include "CPU.h"
 
 int main()
 {
     void program();
-    cpu.load(program);
-    cpu.run();
+    InstructionSet::setCPU(&cpu);       // for aux functions to write to correct memory
+    cpu.load(program);                  // the program to be exeuted is passed as a param
+    cpu.run();                          // and off we go!
 }
 
 void program() {
     // instructions go here
-    cpu.write8(MOV_LR); cpu.write64('H'); cpu.write8(0x0);      //MOVQ  $72, %rax
-    cpu.write8(PUTC);
+    using namespace InstructionSet;     //contains aux functions that write hex to memory
+    std::string s = "Hello world!";
+    for (char c : s) {  //technically for loops don't exist in x64 but I'm lazy and dont want to copy/paste this 20 times
+        movl(c, 0);     //MOVQ  c, %rax
+        putc();         //PUTCHAR
+    }
 
-    cpu.write8(MOV_LR);
-    cpu.write64('e');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('l');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('l');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('o');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64(' ');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('w');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('o');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('r');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('l');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(MOV_LR);
-    cpu.write64('d');
-    cpu.write8(0x0);
-    cpu.write8(PUTC);
-    cpu.write8(EXIT);
+    exit();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
