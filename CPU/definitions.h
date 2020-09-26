@@ -1,6 +1,8 @@
 #pragma once
 
-#define		MEM_SIZE	0x100000
+constexpr uint64_t MEM_SIZE = (uint64_t)1 << 29;
+constexpr uint32_t MAX_ADDRESSABLE = 1 << 28;
+constexpr uint32_t STACK_LIMIT = MAX_ADDRESSABLE + 8;
 
 //REGISTERS
 #define		RAX		registers[0x00]
@@ -26,23 +28,21 @@
 #define		AF		flags[4]
 #define		ZF		flags[6]
 #define		SF		flags[7]
+#define		OF		flags[11]
 
 // OPCODES
-#define		ADDL	0X00
-#define		ADDR	0X01
+#define		ADD		0X00
 #define		PUSH	0X06
 #define		POP		0X07
 #define		OR		0X08
 #define		NOT		0X10
 #define		AND		0X20
-#define		SUBL	0X28
-#define		SUBR	0X29
+#define		SUB		0X28
 #define		XOR		0X30
 
 #define		INC		0X40
 #define		DEC		0X48
-#define		MULL	0X50
-#define		MULR	0X51
+#define		MUL		0X50
 #define		DIVL	0X60
 #define		DIVR	0X61
 
@@ -60,8 +60,7 @@
 #define		NOP		0X90
 #define		CALL	0X9A
 
-#define		MOV_RR	0XA0
-#define		MOV_LR	0XA1
+#define		MOV		0XA0
 
 #define		INT		0XCC
 #define		PUTC	0xD0
