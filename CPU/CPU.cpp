@@ -5,9 +5,9 @@
 int main()
 {
     void program();
-
-    uint64_t x = cpu.binaryAdd((uint64_t)0xffffffffffffffff, (uint64_t)1);
-    std::cout << x << '\n';
+    byte m[6] = { 0x41, 0x41, 0x41, 0x41, 0x41, 0x41 };
+    uint64_t *p = (uint64_t*)&(m[3]);
+    std::cout << */*(byte*)*/p << '\n' << m[3] << '\n';
     cpu.dumpFlags();
     cpu.load(program);                  // the program to be exeuted is passed as a param
     cpu.run();                          // and off we go!

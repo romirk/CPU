@@ -1,8 +1,12 @@
 #pragma once
 
-constexpr uint64_t MEM_SIZE = (uint64_t)1 << 29;
-constexpr uint32_t MAX_ADDRESSABLE = 1 << 28;
+constexpr uint64_t MEM_SIZE = (uint64_t)1 << 28;
+constexpr uint32_t MAX_ADDRESSABLE = 1 << 27;
 constexpr uint32_t STACK_LIMIT = MAX_ADDRESSABLE + 8;
+
+#define		OPCODE_SIZE			8
+#define		OPERAND_SIZE		27
+#define		INSTRUCTION_SIZE	64
 
 //REGISTERS
 #define		RAX		registers[0x00]

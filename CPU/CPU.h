@@ -4,7 +4,10 @@
 #include "definitions.h"
 #include "exceptions.h"
 
-#define bit(a, i)	(((a) >> (i)) & 1)
+//bitshift drudgework done with these
+#define bit(a, i)			(((a) >> (i)) & 1)
+#define ones(n)				(~(uint64_t(0)) >> (64 - (n))) /* returns n-sized number: all bits set to 1*/
+#define extract(x, s, e)	(((x) >> ((s) - (e))) & ones(e))
 
 typedef unsigned char byte;
 
@@ -46,9 +49,9 @@ public:
 		RIP = (uint64_t)0x10;
 	}
 
-	bool isReserved(uint64_t addr) {
-		return addr < 0x10 || addr >= MAX_ADDRESSABLE - 8;
-	}
+	//bool isReserved(uint64_t addr) {
+	//	return addr < 0x10 || addr >= MAX_ADDRESSABLE - 8;
+	//}
 
 	void dumpRegisters() {
 		for (size_t i = 0; i < 0x10; i++)
@@ -126,7 +129,7 @@ public:
 		byte b = x & 0xff;
 		bool f = true;
 		while (b) {
-			if(b & 1)
+			if (b & 1)
 				f = !f;
 			b >>= 1;
 		}
@@ -135,130 +138,163 @@ public:
 
 	// fetch methods
 	uint64_t fetch64() {
-		uint64_t r = fetch64at(RIP);
+		uint64_t r = fetch64(RIP);
 		RIP += 8;
 		return r;
 	}
 
-	uint64_t fetch64at(uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
+	uint64_t fetch64(byte* addr) {
+		//if (isReserved(addr))
+		//	throw SegmentationFault();
 
 		uint64_t r = 0, m = 0x100000000000000;
 		while (m) {
-			r += btoi(memory[addr++]) * m;
+			r += btoi(*(addr++)) * m;
 			m >>= 8;
 		}
 		return r;
 	}
 
+	uint64_t fetch64(uint64_t addr) {
+		return fetch64(&memory[addr]);
+	}
+
 	uint32_t fetch32() {
-		uint32_t r = fetch32at(RIP);
+		uint32_t r = fetch32(RIP);
 		RIP += 4;
 		return r;
 	}
 
-	uint32_t fetch32at(uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
+	uint32_t fetch32(byte* addr) {
+		//if (isReserved(addr))
+		//	throw SegmentationFault();
 
 		uint32_t r = 0, m = 0x1000000;
 		while (m) {
-			r += btoi(memory[addr++]) * m;
+			r += btoi(*(addr++)) * m;
 			m >>= 8;
 		}
 		return r;
 	}
 
+	uint32_t fetch32(uint64_t addr) {
+		return fetch32(&memory[addr]);
+	}
+
 	uint16_t fetch16() {
-		uint16_t r = fetch16at(RIP);
+		uint16_t r = fetch16(RIP);
 		RIP += 2;
 		return r;
 	}
 
-	uint16_t fetch16at(uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
+	uint16_t fetch16(byte* addr) {
+		//if (isReserved(addr))
+		//	throw SegmentationFault();
 
 		uint16_t r = 0, m = 0x100;
 		while (m) {
-			r += btoi(memory[addr++]) * m;
+			r += btoi(*(addr++)) * m;
 			m >>= 8;
 		}
 		return r;
 	}
 
-	byte fetch() {
-		return fetchat(RIP++);
+	uint16_t fetch16(uint64_t addr) {
+		return fetch16(&memory[addr]);
 	}
 
-	byte fetchat(uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
-		return memory[addr];
+	byte fetch() {
+		return fetch(RIP++);
+	}
+
+	byte fetch(byte* addr) {
+		//if (isReserved(addr))
+		//	throw SegmentationFault();
+		return *addr;
+	}
+
+	byte fetch(uint64_t addr) {
+		return fetch(&memory[addr]);
 	}
 
 	// write methods
-	void write64at(uint64_t value, uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
+	void write64(uint64_t value, byte* addr) {
+		//if (isReserved(addr))
+			//throw SegmentationFault();
 
 		int s = 0x38;
 		uint64_t m = 0xff00000000000000;
 		while (m) {
-			memory[addr++] = (byte)((value & m) >> s);
+			*(addr++) = (byte)((value & m) >> s);
 			m >>= 8;
 			s -= 8;
 		}
 	}
 
-	void write32at(uint32_t value, uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
+	void write64(uint64_t value, uint64_t addr) {
+		write64(value, &memory[addr]);
+	}
+
+	void write64(uint64_t val) {
+		write64(val, RIP);
+		RIP += 8;
+	}
+
+	void write32(uint32_t value, byte* addr) {
+		//if (isReserved(addr))
+		//	throw SegmentationFault();
 
 		uint32_t m = 0xff000000;
 		int s = 0x18;
 		while (m) {
-			memory[addr++] = (byte)((value & m) >> s);
+			*(addr++) = (byte)((value & m) >> s);
 			m >>= 8;
 			s -= 8;
 		}
 	}
 
-	void write16at(uint16_t value, uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
-
-		memory[addr++] = (byte)((value & 0xff00) >> 0x08);
-		memory[addr] = (byte)(value & 0xff);
-	}
-
-	void write8at(byte value, uint64_t addr) {
-		if (isReserved(addr))
-			throw SegmentationFault();
-
-		memory[addr] = (byte)(value & 0xff);
-	}
-
-	void write64(uint64_t val) {
-		write64at(val, RIP);
-		RIP += 8;
+	void write32(uint32_t value, uint64_t addr) {
+		write32(value, &memory[addr]);
 	}
 
 	void write32(uint32_t val) {
-		write32at(val, RIP);
+		write32(val, RIP);
 		RIP += 4;
 	}
 
+	void write16(uint16_t value, byte* addr) {
+		//if (isReserved(addr))
+		//	throw SegmentationFault();
+
+		*(addr++) = (byte)((value & 0xff00) >> 0x08);
+		*addr = (byte)(value & 0xff);
+	}
+
+	void write16(uint16_t value, uint64_t addr) {
+		write16(value, &memory[addr]);
+	}
+
 	void write16(uint16_t val) {
-		write16at(val, RIP);
+		write16(val, RIP);
 		RIP += 2;
 	}
 
-	void write8(byte val) {
-		write8at(val, RIP);
-		RIP++;
+	void write8(byte value, byte* addr) {
+		//if (isReserved(addr))
+		//	throw SegmentationFault();
+
+		*addr = (byte)(value & 0xff);
 	}
+
+	void write8(byte value, uint64_t addr) {
+		write8(value, &memory[addr]);
+	}
+
+	void write8(byte val) {
+		write8(val, RIP);
+		RIP += 2;
+	}
+
 
 	void write_instruction(byte i, uint32_t src = 0, uint32_t dst = 0) {
 		uint64_t ins = (i & 0xffll) << 56;
@@ -270,11 +306,11 @@ public:
 	//stack operations
 	void push(uint64_t v) {
 		RSP -= 8;
-		write64at(v, (int)RSP);
+		write64(v, RSP);
 	}
 
 	uint64_t pop() {
-		uint64_t r = fetch64at((int)RSP);
+		uint64_t r = fetch64((int)RSP);
 		RSP += 8;
 		return r;
 	}
@@ -282,15 +318,17 @@ public:
 	// execution methods
 	void step() {
 
-		//instructions are fixed width: 8bit opcode + 48bit src + 8bit dst = 64bit instruction
+		//instructions are fixed width: 7bit opcode + 2 bit mode (mem/reg) + 27bit src + 27bit dst = 64bit instruction
 		//registers are taken to be memory locations below 0x10
 
 		uint64_t instruction = fetch64();
-		byte opcode = (instruction >> 56) & 0xff;
+		byte opcode = extract(instruction, 64, 8);					//8 bit opcode
+		Instruction::mode = extract(instruction, 56, 2);			//2 bit mode
+		uint32_t src = extract(instruction, 54, 27);				//27 bit src
+		uint32_t dst = extract(instruction, 27, 27);				//27 bit dst
 
-		Instruction::src = (instruction >> 28) & 0xFFFFFFF;
-		Instruction::dst = instruction & 0xFFFFFFF;
-		
+		Instruction::setref(src, dst);
+
 		switch (opcode)
 		{
 			// arithmetic
@@ -303,29 +341,29 @@ public:
 		case MUL: Instruction::mul();
 			break;
 
-		/*case DIVL:
-			src = fetch64();
-			RDX = RAX % src;
-			RAX /= src;
-			break;
+			/*case DIVL:
+				src = fetch64();
+				RDX = RAX % src;
+				RAX /= src;
+				break;
 
-		case DIVR:
-			src = fetch();
-			RDX = RAX % registers[src];
-			RAX /= registers[src];
-			break;
+			case DIVR:
+				src = fetch();
+				RDX = RAX % registers[src];
+				RAX /= registers[src];
+				break;
 
-		case INC:
-			dst = fetch();
-			registers[dst]++;
-			break;
+			case INC:
+				dst = fetch();
+				registers[dst]++;
+				break;
 
-		case DEC:
-			dst = fetch();
-			registers[dst]--;
-			break;*/
+			case DEC:
+				dst = fetch();
+				registers[dst]--;
+				break;*/
 
-			//mov
+				//mov
 		case MOV: Instruction::mov();
 			break;
 
@@ -335,11 +373,11 @@ public:
 			break;
 
 		default:
-			std::cout << "Segmentation fault. (probably)\n"; 
-		
+			std::cout << "Segmentation fault. (probably)\n";
+
 		case EXIT:
 			running = false;
-			break;		
+			break;
 		}
 	}
 
@@ -355,44 +393,58 @@ public:
 
 	class Instruction {
 	public:
-		static uint64_t src, dst;
+		static uint64_t *src, *dst;
+		static byte mode;
 
 		//static byte instruction;
 		static CPU* cpu;
 
-		static void mov() {
-			src = src < 0x10 ? cpu->registers[src] : src;
-			if (dst < 0x10)
-				cpu->registers[dst] = src;
+		static void setref(uint64_t s, uint64_t d) {
+			if (mode & 0b10)
+				src = &(cpu->registers[s]);
 			else
-				cpu->write64at(src, dst);
+				src = (uint64_t*)&(cpu->memory[s]);
+			if (mode & 0b1)
+				dst = &(cpu->registers[d]);
+			else
+				dst = (uint64_t*)&(cpu->memory[s]);
 		}
-		
+
+		static void mov() {
+			mov(*src);
+		}
+
+		static void mov(uint64_t r) {
+			if (~(mode & 1))
+				cpu->write64(r, (byte*)dst);
+			else
+				*dst = r;
+		}
+
 		static void add() {
-			src = src < 0x10 ? cpu->registers[src] : src;
-			cpu->registers[dst] = cpu->binaryAdd(cpu->registers[dst], src);
+			uint64_t r = cpu->binaryAdd(*src, *dst);
+			mov(r);
 		}
 
 		static void sub() {
-			src = src < 0x10 ? cpu->registers[src] : src;
-			cpu->registers[dst] -= src;
-			cpu->SF = cpu->registers[dst] < 0;
-			cpu->ZF = cpu->registers[dst] == 0;
-			cpu->setParityFlag(cpu->registers[dst]);
+			uint64_t r = *dst - *src;
+			cpu->SF = r < 0;
+			cpu->ZF = r == 0;
+			cpu->setParityFlag(r);
+			mov(r);
 		}
 
 		static void mul() {
-			src = src < 0x10 ? cpu->registers[src] : src;
-			cpu->RAX *= src;
+			cpu->RAX *= *src;
 			cpu->ZF = cpu->RAX == 0;
 			cpu->SF = cpu->RAX < 0;
 			cpu->setParityFlag(cpu->RAX);
 		}
 	};
-};
 
-uint64_t CPU::Instruction::src = 0;
-uint64_t CPU::Instruction::dst = 0;
+} cpu;
+
+uint64_t* CPU::Instruction::src	= nullptr;
+uint64_t* CPU::Instruction::dst	= nullptr;
+byte	 CPU::Instruction::mode = 0;
 CPU*	 CPU::Instruction::cpu = nullptr;
-
-CPU cpu;
