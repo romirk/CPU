@@ -4,11 +4,6 @@
 #include "definitions.h"
 #include "exceptions.h"
 
-//bitshift drudgework done with these
-#define bit(a, i)			(((a) >> (i)) & 1)
-#define ones(n)				(~(uint64_t(0)) >> (64 - (n))) /* returns n-sized number: all bits set to 1*/
-#define extract(x, s, e)	(((x) >> ((s) - (e))) & ones(e))
-
 typedef unsigned char byte;
 
 /**
@@ -20,14 +15,12 @@ typedef unsigned char byte;
 */
 class CPU
 {
-
-
 	byte memory[MEM_SIZE] = { 0 };
 	void (*prog)();
 	uint64_t registers[0x10] = { 0 };
 	std::bitset<12> flags = 0;
 	bool running = false;
-	bool debug = false;
+	const static bool debug = false;
 
 public:
 	CPU() {
@@ -47,6 +40,18 @@ public:
 
 	void resetIP() {
 		RIP = (uint64_t)0x10;
+	}
+
+	uint64_t ip() {
+		return RIP;
+	}
+
+	uint64_t sp() {
+		return RSP;
+	}
+
+	uint64_t bp() {
+		return RBP;
 	}
 
 	//bool isReserved(uint64_t addr) {
@@ -296,20 +301,29 @@ public:
 	}
 
 
-	void write_instruction(byte i, uint32_t src = 0, uint32_t dst = 0) {
-		uint64_t ins = (i & 0xffll) << 56;
-		ins |= (src & 0xFFFFFFFll) << 28;
-		ins |= dst & 0xFFFFFFFll;
+	void write_instruction(byte i, uint32_t src = 0, uint32_t dst = 0, bool srcreg = false, bool dstreg = false) {
+		uint64_t ins = 0;
+		encode(ins, i, 64, 8);
+		encode(ins, srcreg, 56, 1);
+		encode(ins, dstreg, 55, 1);
+		encode(ins, src, 54, 27);
+		encode(ins, dst, 27, 27);
 		write64(ins);
 	}
 
 	//stack operations
 	void push(uint64_t v) {
+		if (RSP <= STACK_LIMIT)
+			throw new SegmentationFault();
+
 		RSP -= 8;
 		write64(v, RSP);
 	}
 
 	uint64_t pop() {
+		if (RSP >= RBP)
+			throw new SegmentationFault();
+
 		uint64_t r = fetch64((int)RSP);
 		RSP += 8;
 		return r;
@@ -334,6 +348,8 @@ public:
 			// arithmetic
 		case ADD: Instruction::add();
 			break;
+		case ADDL: Instruction::add();
+			break;
 
 		case SUB: Instruction::sub();
 			break;
@@ -341,30 +357,32 @@ public:
 		case MUL: Instruction::mul();
 			break;
 
-			/*case DIVL:
-				src = fetch64();
-				RDX = RAX % src;
-				RAX /= src;
-				break;
+		case DIVL:
+			RDX = RAX % src;
+			RAX /= src;
+			break;
 
-			case DIVR:
-				src = fetch();
-				RDX = RAX % registers[src];
-				RAX /= registers[src];
-				break;
+		case DIV:
+			src = fetch();
+			RDX = RAX % registers[src];
+			RAX /= registers[src];
+			break;
 
-			case INC:
-				dst = fetch();
-				registers[dst]++;
-				break;
+		case INC:
+			dst = fetch();
+			registers[dst]++;
+			break;
 
-			case DEC:
-				dst = fetch();
-				registers[dst]--;
-				break;*/
+		case DEC:
+			dst = fetch();
+			registers[dst]--;
+			break;
 
-				//mov
+			//mov
 		case MOV: Instruction::mov();
+			break;
+
+		case MOVL: Instruction::mov(src);
 			break;
 
 			//I/O
@@ -393,7 +411,7 @@ public:
 
 	class Instruction {
 	public:
-		static uint64_t *src, *dst;
+		static uint64_t* src, * dst;
 		static byte mode;
 
 		//static byte instruction;
@@ -415,10 +433,10 @@ public:
 		}
 
 		static void mov(uint64_t r) {
-			if (~(mode & 1))
-				cpu->write64(r, (byte*)dst);
-			else
+			if (mode & 1)
 				*dst = r;
+			else
+				cpu->write64(r, (byte*)dst);
 		}
 
 		static void add() {
@@ -444,7 +462,7 @@ public:
 
 } cpu;
 
-uint64_t* CPU::Instruction::src	= nullptr;
-uint64_t* CPU::Instruction::dst	= nullptr;
+uint64_t* CPU::Instruction::src = nullptr;
+uint64_t* CPU::Instruction::dst = nullptr;
 byte	 CPU::Instruction::mode = 0;
-CPU*	 CPU::Instruction::cpu = nullptr;
+CPU* CPU::Instruction::cpu = nullptr;

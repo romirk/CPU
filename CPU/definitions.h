@@ -1,12 +1,18 @@
 #pragma once
 
-constexpr uint64_t MEM_SIZE = (uint64_t)1 << 28;
-constexpr uint32_t MAX_ADDRESSABLE = 1 << 27;
-constexpr uint32_t STACK_LIMIT = MAX_ADDRESSABLE + 8;
-
 #define		OPCODE_SIZE			8
 #define		OPERAND_SIZE		27
 #define		INSTRUCTION_SIZE	64
+
+constexpr uint64_t MEM_SIZE = (uint64_t)1 << (OPERAND_SIZE + 1);
+constexpr uint32_t MAX_ADDRESSABLE = 1 << OPERAND_SIZE;
+constexpr uint32_t STACK_LIMIT = MAX_ADDRESSABLE + 8;
+
+//bitshift drudgework done with these
+#define bit(a, i)			(((a) >> (i)) & 1)
+#define ones(n)				(~(uint64_t(0)) >> (64 - (n)))
+#define extract(x, s, n)	(((x) >> ((s) - (n))) & ones(n))
+#define encode(x, v, s, n)	(x) |= (ones(n) & v) << ((s) - (n))
 
 //REGISTERS
 #define		RAX		registers[0x00]
@@ -36,19 +42,23 @@ constexpr uint32_t STACK_LIMIT = MAX_ADDRESSABLE + 8;
 
 // OPCODES
 #define		ADD		0X00
-#define		PUSH	0X06
-#define		POP		0X07
+#define		ADDL	0X01
+#define		PUSH	0X04
+#define		POP		0X05
+#define		PUSHL	0X06
+#define		POPL	0X07
 #define		OR		0X08
 #define		NOT		0X10
 #define		AND		0X20
 #define		SUB		0X28
+#define		SUBL	0X29
 #define		XOR		0X30
 
 #define		INC		0X40
 #define		DEC		0X48
 #define		MUL		0X50
-#define		DIVL	0X60
-#define		DIVR	0X61
+#define		DIV		0X60
+#define		DIVL	0X61
 
 #define		JZ		0X70
 #define		JNZ		0X71
@@ -65,6 +75,7 @@ constexpr uint32_t STACK_LIMIT = MAX_ADDRESSABLE + 8;
 #define		CALL	0X9A
 
 #define		MOV		0XA0
+#define		MOVL	0xA1
 
 #define		INT		0XCC
 #define		PUTC	0xD0
